@@ -33,7 +33,11 @@ defmodule FairPick.MixProject do
   defp package do
     [
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/electric-lump-software/fair_pick"}
+      links: %{
+        "GitHub" => "https://github.com/electric-lump-software/fair_pick",
+        "Changelog" =>
+          "https://github.com/electric-lump-software/fair_pick/blob/main/CHANGELOG.md"
+      }
     ]
   end
 end

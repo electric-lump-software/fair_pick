@@ -12,9 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FairPick.expand_pool/1` — made private; implementation detail, not part of the public API
 - `FairPick.shuffle/2` — made private; implementation detail, not part of the public API
 
+### Added
+
+- Hex.pm package metadata — description, license, source URL, links
+- `ex_doc ~> 0.34` dev dependency for documentation generation
+
 ### Changed
 
 - `FairPick.PRNG` marked `@moduledoc false`; module is not part of the public API surface
+- Elixir version requirement loosened from `~> 1.19` to `~> 1.17`
+- CI workflow updated to target `main` branch
 
 ## [0.1.0] - 2026-03-24
 
