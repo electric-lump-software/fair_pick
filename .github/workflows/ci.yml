@@ -13,6 +13,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check no AI attribution
+        run: |
+          if git log origin/main..HEAD --format="%B" | grep -qi "co-authored-by: claude"; then
+            echo "ERROR: AI co-author attribution found in commits"
+            exit 1
+          fi
 
       - uses: erlef/setup-beam@v1
         id: beam
