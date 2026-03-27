@@ -48,6 +48,20 @@ defmodule FairPickTest do
       assert FairPick.draw(entries, seed, 2) == FairPick.draw(entries, seed, 2)
     end
 
+    test "different seeds produce different results" do
+      entries = [
+        %{id: "a", weight: 1},
+        %{id: "b", weight: 1},
+        %{id: "c", weight: 1},
+        %{id: "d", weight: 1},
+        %{id: "e", weight: 1}
+      ]
+
+      result1 = FairPick.draw(entries, <<0::256>>, 3)
+      result2 = FairPick.draw(entries, <<1::256>>, 3)
+      refute result1 == result2
+    end
+
     test "validates entries are non-empty" do
       assert_raise ArgumentError, fn ->
         FairPick.draw([], <<0::256>>, 1)
