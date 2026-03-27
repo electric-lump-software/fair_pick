@@ -8,14 +8,12 @@ defmodule FairPick do
   See docs/specs/fair-pick-protocol.md §1 for the full specification.
   """
 
-  @doc """
-  Sort entries by id and expand into a flat pool.
-
-  Each entry with weight N produces N consecutive copies of its id.
-  Entries are sorted by id in ascending lexicographic byte order first.
-  """
+  # Sort entries by id and expand into a flat pool.
+  #
+  # Each entry with weight N produces N consecutive copies of its id.
+  # Entries are sorted by id in ascending lexicographic byte order first.
   @spec expand_pool([%{id: String.t(), weight: pos_integer()}]) :: [String.t()]
-  def expand_pool(entries) do
+  defp expand_pool(entries) do
     entries
     |> Enum.sort_by(& &1.id)
     |> Enum.flat_map(fn %{id: id, weight: weight} ->
@@ -23,20 +21,18 @@ defmodule FairPick do
     end)
   end
 
-  @doc """
-  Durstenfeld (modern Fisher-Yates) shuffle.
-
-  Performs the FULL shuffle regardless of how many winners are needed.
-  Returns `{shuffled_list, final_prng_counter}`.
-
-  See docs/specs/fair-pick-protocol.md §1.5.
-  """
+  # Durstenfeld (modern Fisher-Yates) shuffle.
+  #
+  # Performs the FULL shuffle regardless of how many winners are needed.
+  # Returns {shuffled_list, final_prng_counter}.
+  #
+  # See docs/specs/fair-pick-protocol.md §1.5.
   @spec shuffle([String.t()], <<_::256>>) :: {[String.t()], non_neg_integer()}
-  def shuffle(pool, _seed) when length(pool) <= 1 do
+  defp shuffle(pool, _seed) when length(pool) <= 1 do
     {pool, 0}
   end
 
-  def shuffle(pool, seed) do
+  defp shuffle(pool, seed) do
     arr = :array.from_list(pool)
     m = :array.size(arr)
 
