@@ -15,7 +15,7 @@ Add `fair_pick` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:fair_pick, "~> 0.1.0"}
+    {:fair_pick, "~> 0.2"}
   ]
 end
 ```

@@ -1,9 +1,5 @@
 defmodule FairPick.PRNG do
-  @moduledoc """
-  SHA256 counter-mode PRNG.
-
-  See docs/specs/fair-pick-protocol.md §1.3 for specification.
-  """
+  @moduledoc false
 
   @doc """
   Generate a single 32-byte PRNG block.
