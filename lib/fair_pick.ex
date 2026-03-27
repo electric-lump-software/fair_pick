@@ -8,6 +8,10 @@ defmodule FairPick do
   See docs/specs/fair-pick-protocol.md §1 for the full specification.
   """
 
+  # Sort entries by id and expand into a flat pool.
+  #
+  # Each entry with weight N produces N consecutive copies of its id.
+  # Entries are sorted by id in ascending lexicographic byte order first.
   @spec expand_pool([%{id: String.t(), weight: pos_integer()}]) :: [String.t()]
   defp expand_pool(entries) do
     entries
@@ -17,6 +21,12 @@ defmodule FairPick do
     end)
   end
 
+  # Durstenfeld (modern Fisher-Yates) shuffle.
+  #
+  # Performs the FULL shuffle regardless of how many winners are needed.
+  # Returns {shuffled_list, final_prng_counter}.
+  #
+  # See docs/specs/fair-pick-protocol.md §1.5.
   @spec shuffle([String.t()], <<_::256>>) :: {[String.t()], non_neg_integer()}
   defp shuffle(pool, _seed) when length(pool) <= 1 do
     {pool, 0}
