@@ -20,8 +20,6 @@ def deps do
 end
 ```
 
-> **Note:** `fair_pick` is not yet published to Hex.pm. Check back soon.
-
 ## Usage
 
 ```elixir

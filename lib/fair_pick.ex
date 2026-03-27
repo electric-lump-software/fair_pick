@@ -5,7 +5,7 @@ defmodule FairPick do
   Given a list of entries, a seed, and a winner count, produces an ordered
   list of winners. Same inputs always produce the same output.
 
-  See docs/specs/fair-pick-protocol.md §1 for the full specification.
+  See the [README](https://hexdocs.pm/fair_pick) for the full algorithm specification.
   """
 
   # Sort entries by id and expand into a flat pool.
@@ -26,7 +26,7 @@ defmodule FairPick do
   # Performs the FULL shuffle regardless of how many winners are needed.
   # Returns {shuffled_list, final_prng_counter}.
   #
-  # See docs/specs/fair-pick-protocol.md §1.5.
+  # See README §Algorithm.
   @spec shuffle([String.t()], <<_::256>>) :: {[String.t()], non_neg_integer()}
   defp shuffle(pool, _seed) when length(pool) <= 1 do
     {pool, 0}
@@ -58,7 +58,7 @@ defmodule FairPick do
   Returns an ordered list of `%{position: pos, entry_id: id}` maps.
   Same inputs always produce the same output.
 
-  See docs/specs/fair-pick-protocol.md §1 for the full specification.
+  See the [README](https://hexdocs.pm/fair_pick) for the full algorithm specification.
   """
   @spec draw([%{id: String.t(), weight: pos_integer()}], <<_::256>>, pos_integer()) ::
           [%{position: pos_integer(), entry_id: String.t()}]
