@@ -21,7 +21,7 @@ defmodule FairPick.PRNG do
   Uses rejection sampling to eliminate modular bias.
   Returns `{value, next_counter}`.
 
-  See docs/specs/fair-pick-protocol.md §1.4.
+  See README §Algorithm.
   """
   @spec random_integer(<<_::256>>, non_neg_integer(), pos_integer()) ::
           {non_neg_integer(), non_neg_integer()}
