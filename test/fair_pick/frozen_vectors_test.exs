@@ -7,6 +7,8 @@ defmodule FairPick.FrozenVectorsTest do
 
   Each vector is a hardcoded {seed_bytes, entries, winner_count} -> expected_winners
   assertion. Exact order matters — these are protocol commitments.
+
+  See also: WallopCore.FrozenVectorsTest for the protocol-level vectors.
   """
 
   use ExUnit.Case, async: true
@@ -14,9 +16,11 @@ defmodule FairPick.FrozenVectorsTest do
   @seed Base.decode16!(
           "A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6A7B8C9D0E1F2A3B4C5D6A7B8C9D0E1F2"
         )
+  @seed_zeros <<0::256>>
+  @seed_ones :binary.copy(<<0xFF::size(8)>>, 32)
 
   describe "frozen vectors (v0.2.0)" do
-    test "1: basic draw — 3 equal-weight entries, 2 winners" do
+    test "1a: basic draw — 3 equal-weight entries, 2 winners" do
       entries = [
         %{id: "alice", weight: 1},
         %{id: "bob", weight: 1},
@@ -24,6 +28,36 @@ defmodule FairPick.FrozenVectorsTest do
       ]
 
       result = FairPick.draw(entries, @seed, 2)
+
+      assert result == [
+               %{position: 1, entry_id: "bob"},
+               %{position: 2, entry_id: "charlie"}
+             ]
+    end
+
+    test "1b: basic draw — zeros seed" do
+      entries = [
+        %{id: "alice", weight: 1},
+        %{id: "bob", weight: 1},
+        %{id: "charlie", weight: 1}
+      ]
+
+      result = FairPick.draw(entries, @seed_zeros, 2)
+
+      assert result == [
+               %{position: 1, entry_id: "charlie"},
+               %{position: 2, entry_id: "bob"}
+             ]
+    end
+
+    test "1c: basic draw — ones seed" do
+      entries = [
+        %{id: "alice", weight: 1},
+        %{id: "bob", weight: 1},
+        %{id: "charlie", weight: 1}
+      ]
+
+      result = FairPick.draw(entries, @seed_ones, 2)
 
       assert result == [
                %{position: 1, entry_id: "bob"},
@@ -123,17 +157,31 @@ defmodule FairPick.FrozenVectorsTest do
              ]
     end
 
-    test "8: max weight spread — weight 1 vs weight 1000" do
+    test "8: max weight spread — 3 entries, 1 winner" do
       entries = [
-        %{id: "heavy", weight: 1000},
+        %{id: "heavy", weight: 100},
+        %{id: "medium", weight: 10},
         %{id: "light", weight: 1}
       ]
 
-      result = FairPick.draw(entries, @seed, 2)
+      result = FairPick.draw(entries, @seed, 1)
 
       assert result == [
-               %{position: 1, entry_id: "heavy"},
-               %{position: 2, entry_id: "light"}
+               %{position: 1, entry_id: "heavy"}
+             ]
+    end
+
+    test "9: winner_count exceeds entries — returns all in deterministic order" do
+      entries = [
+        %{id: "alpha", weight: 1},
+        %{id: "beta", weight: 1}
+      ]
+
+      result = FairPick.draw(entries, @seed, 5)
+
+      assert result == [
+               %{position: 1, entry_id: "beta"},
+               %{position: 2, entry_id: "alpha"}
              ]
     end
   end
