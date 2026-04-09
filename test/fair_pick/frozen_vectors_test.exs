@@ -13,9 +13,7 @@ defmodule FairPick.FrozenVectorsTest do
 
   use ExUnit.Case, async: true
 
-  @seed Base.decode16!(
-          "A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6A7B8C9D0E1F2A3B4C5D6A7B8C9D0E1F2"
-        )
+  @seed Base.decode16!("A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6A7B8C9D0E1F2A3B4C5D6A7B8C9D0E1F2")
   @seed_zeros <<0::256>>
   @seed_ones :binary.copy(<<0xFF::size(8)>>, 32)
 
