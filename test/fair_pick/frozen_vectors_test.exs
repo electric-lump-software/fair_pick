@@ -1,186 +1,63 @@
 defmodule FairPick.FrozenVectorsTest do
   @moduledoc """
-  Frozen test vectors. If any of these fail, the algorithm has drifted.
-  Do not update the expected values without a version bump and a conversation.
+  Frozen test vectors loaded from the shared wallop spec.
 
-  Generated against fair_pick v0.2.0.
+  These are the canonical outputs — if any of these fail, the algorithm has
+  drifted from the cross-implementation contract. Do not update the expected
+  values without a version bump and a conversation.
 
-  Each vector is a hardcoded {seed_bytes, entries, winner_count} -> expected_winners
-  assertion. Exact order matters — these are protocol commitments.
-
-  See also: WallopCore.FrozenVectorsTest for the protocol-level vectors.
+  Source: ../wallop/spec/vectors/fair-pick.json
   """
 
   use ExUnit.Case, async: true
 
-  @seed Base.decode16!("A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6A7B8C9D0E1F2A3B4C5D6A7B8C9D0E1F2")
-  @seed_zeros <<0::256>>
-  @seed_ones :binary.copy(<<0xFF::size(8)>>, 32)
+  @vectors_path Path.expand("../../../wallop/spec/vectors/fair-pick.json", __DIR__)
 
-  describe "frozen vectors (v0.2.0)" do
-    test "1a: basic draw — 3 equal-weight entries, 2 winners" do
-      entries = [
-        %{id: "alice", weight: 1},
-        %{id: "bob", weight: 1},
-        %{id: "charlie", weight: 1}
-      ]
+  @vectors (
+    case File.read(@vectors_path) do
+      {:ok, json} ->
+        Jason.decode!(json) |> Map.fetch!("vectors")
 
-      result = FairPick.draw(entries, @seed, 2)
-
-      assert result == [
-               %{position: 1, entry_id: "bob"},
-               %{position: 2, entry_id: "charlie"}
-             ]
+      {:error, _} ->
+        raise """
+        Shared test vectors not found at #{@vectors_path}.
+        Make sure the wallop repo is checked out at ../wallop.
+        """
     end
+  )
 
-    test "1b: basic draw — zeros seed" do
-      entries = [
-        %{id: "alice", weight: 1},
-        %{id: "bob", weight: 1},
-        %{id: "charlie", weight: 1}
-      ]
+  for {vector, index} <- Enum.with_index(@vectors) do
+    @vector vector
+    @tag_name "shared vector #{index + 1}: #{vector["name"]}"
 
-      result = FairPick.draw(entries, @seed_zeros, 2)
+    describe @tag_name do
+      test "matches expected winners" do
+        vector = @vector
 
-      assert result == [
-               %{position: 1, entry_id: "charlie"},
-               %{position: 2, entry_id: "bob"}
-             ]
-    end
+        entries =
+          Enum.map(vector["entries"], fn e ->
+            %{id: e["id"], weight: e["weight"]}
+          end)
 
-    test "1c: basic draw — ones seed" do
-      entries = [
-        %{id: "alice", weight: 1},
-        %{id: "bob", weight: 1},
-        %{id: "charlie", weight: 1}
-      ]
+        seed =
+          case vector do
+            %{"seed_hex" => hex} ->
+              Base.decode16!(hex, case: :lower)
 
-      result = FairPick.draw(entries, @seed_ones, 2)
+            %{"seed_note" => note} ->
+              # seed_note is like: SHA-256("frozen-equal-weight-vector")
+              inner = note |> String.trim_leading("SHA-256(\"") |> String.trim_trailing("\")")
+              :crypto.hash(:sha256, inner)
+          end
 
-      assert result == [
-               %{position: 1, entry_id: "bob"},
-               %{position: 2, entry_id: "charlie"}
-             ]
-    end
+        winner_count = vector["winner_count"]
 
-    test "2: weighted draw — different weights affect selection" do
-      entries = [
-        %{id: "alice", weight: 10},
-        %{id: "bob", weight: 1},
-        %{id: "charlie", weight: 5}
-      ]
+        result = FairPick.draw(entries, seed, winner_count)
+        actual_winners = Enum.map(result, & &1.entry_id)
 
-      result = FairPick.draw(entries, @seed, 2)
-
-      assert result == [
-               %{position: 1, entry_id: "alice"},
-               %{position: 2, entry_id: "charlie"}
-             ]
-    end
-
-    test "3: single winner" do
-      entries = [
-        %{id: "alice", weight: 1},
-        %{id: "bob", weight: 1},
-        %{id: "charlie", weight: 1}
-      ]
-
-      result = FairPick.draw(entries, @seed, 1)
-
-      assert result == [
-               %{position: 1, entry_id: "bob"}
-             ]
-    end
-
-    test "4: all winners — deterministic full ordering" do
-      entries = [
-        %{id: "alice", weight: 1},
-        %{id: "bob", weight: 1},
-        %{id: "charlie", weight: 1},
-        %{id: "dave", weight: 1}
-      ]
-
-      result = FairPick.draw(entries, @seed, 4)
-
-      assert result == [
-               %{position: 1, entry_id: "dave"},
-               %{position: 2, entry_id: "charlie"},
-               %{position: 3, entry_id: "bob"},
-               %{position: 4, entry_id: "alice"}
-             ]
-    end
-
-    test "5: single entry — degenerate case" do
-      entries = [%{id: "solo", weight: 1}]
-
-      result = FairPick.draw(entries, @seed, 1)
-
-      assert result == [
-               %{position: 1, entry_id: "solo"}
-             ]
-    end
-
-    test "6: large entry set — 100 entries, 5 winners" do
-      entries =
-        Enum.map(1..100, fn i ->
-          %{id: "entry_#{String.pad_leading(Integer.to_string(i), 3, "0")}", weight: 1}
-        end)
-
-      result = FairPick.draw(entries, @seed, 5)
-
-      assert result == [
-               %{position: 1, entry_id: "entry_062"},
-               %{position: 2, entry_id: "entry_038"},
-               %{position: 3, entry_id: "entry_023"},
-               %{position: 4, entry_id: "entry_044"},
-               %{position: 5, entry_id: "entry_065"}
-             ]
-    end
-
-    test "7: duplicate weights — all same weight, stable tiebreaking" do
-      entries = [
-        %{id: "alpha", weight: 3},
-        %{id: "beta", weight: 3},
-        %{id: "gamma", weight: 3},
-        %{id: "delta", weight: 3},
-        %{id: "epsilon", weight: 3}
-      ]
-
-      result = FairPick.draw(entries, @seed, 3)
-
-      assert result == [
-               %{position: 1, entry_id: "alpha"},
-               %{position: 2, entry_id: "beta"},
-               %{position: 3, entry_id: "epsilon"}
-             ]
-    end
-
-    test "8: max weight spread — 3 entries, 1 winner" do
-      entries = [
-        %{id: "heavy", weight: 100},
-        %{id: "medium", weight: 10},
-        %{id: "light", weight: 1}
-      ]
-
-      result = FairPick.draw(entries, @seed, 1)
-
-      assert result == [
-               %{position: 1, entry_id: "heavy"}
-             ]
-    end
-
-    test "9: winner_count exceeds entries — returns all in deterministic order" do
-      entries = [
-        %{id: "alpha", weight: 1},
-        %{id: "beta", weight: 1}
-      ]
-
-      result = FairPick.draw(entries, @seed, 5)
-
-      assert result == [
-               %{position: 1, entry_id: "beta"},
-               %{position: 2, entry_id: "alpha"}
-             ]
+        assert actual_winners == vector["expected_winners"],
+               "Vector '#{vector["name"]}' failed.\nExpected: #{inspect(vector["expected_winners"])}\nGot: #{inspect(actual_winners)}"
+      end
     end
   end
 end
