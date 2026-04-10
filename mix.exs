@@ -34,6 +34,7 @@ defmodule FairPick.MixProject do
   defp package do
     [
       licenses: ["MIT"],
+      files: ~w(lib mix.exs README.md LICENSE CHANGELOG.md),
       links: %{
         "GitHub" => "https://github.com/electric-lump-software/fair_pick",
         "Changelog" =>

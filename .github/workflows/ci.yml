@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          submodules: true
 
       - name: Check no AI attribution
         run: |
@@ -71,3 +72,5 @@ jobs:
 
       - name: Run tests
         run: mix test
+        env:
+          WALLOP_REQUIRE_SHARED_VECTORS: "1"

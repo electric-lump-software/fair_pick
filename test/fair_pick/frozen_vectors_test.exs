@@ -6,15 +6,15 @@ defmodule FairPick.FrozenVectorsTest do
   drifted from the cross-implementation contract. Do not update the expected
   values without a version bump and a conversation.
 
-  Source: ../wallop/spec/vectors/fair-pick.json
+  Source: vendor/wallop/spec/vectors/fair-pick.json
 
-  If the wallop repo is not checked out as a sibling, these tests are skipped
-  (not a compilation error).
+  If the wallop submodule has not been initialised, these tests are skipped
+  (not a compilation error). Run `git submodule update --init` to fetch it.
   """
 
   use ExUnit.Case, async: true
 
-  @vectors_path Path.expand("../../../wallop/spec/vectors/fair-pick.json", __DIR__)
+  @vectors_path Path.expand("../../vendor/wallop/spec/vectors/fair-pick.json", __DIR__)
 
   @vectors (case File.read(@vectors_path) do
               {:ok, json} -> Jason.decode!(json) |> Map.fetch!("vectors")
@@ -27,6 +27,22 @@ defmodule FairPick.FrozenVectorsTest do
       @tag_name "shared vector #{index + 1}: #{vector["name"]}"
 
       describe @tag_name do
+        test "seed_hex matches SHA-256(seed_note) when both present" do
+          vector = @vector
+
+          case vector do
+            %{"seed_hex" => hex, "seed_note" => note} ->
+              [_, inner] = Regex.run(~r/^SHA-256\("(.+)"\)$/, note)
+              expected_hex = :crypto.hash(:sha256, inner) |> Base.encode16(case: :lower)
+
+              assert hex == expected_hex,
+                     "seed_hex does not match SHA-256(seed_note) for '#{vector["name"]}'"
+
+            _ ->
+              :ok
+          end
+        end
+
         test "matches expected winners" do
           vector = @vector
 
@@ -35,18 +51,7 @@ defmodule FairPick.FrozenVectorsTest do
               %{id: e["id"], weight: e["weight"]}
             end)
 
-          seed =
-            case vector do
-              %{"seed_hex" => hex} ->
-                Base.decode16!(hex, case: :lower)
-
-              %{"seed_note" => note} ->
-                case Regex.run(~r/^SHA-256\("(.+)"\)$/, note) do
-                  [_, inner] -> :crypto.hash(:sha256, inner)
-                  nil -> flunk("Unrecognised seed_note format: #{note}")
-                end
-            end
-
+          seed = Base.decode16!(vector["seed_hex"], case: :lower)
           winner_count = vector["winner_count"]
 
           result = FairPick.draw(entries, seed, winner_count)
@@ -58,7 +63,14 @@ defmodule FairPick.FrozenVectorsTest do
       end
     end
   else
+    if System.get_env("WALLOP_REQUIRE_SHARED_VECTORS") == "1" do
+      raise "Shared vectors required but not found at #{@vectors_path}. Run: git submodule update --init"
+    end
+
     @moduletag :skip
-    IO.warn("Skipping shared frozen vectors — wallop repo not found at #{@vectors_path}")
+    IO.warn(
+      "Skipping shared frozen vectors — wallop submodule not found at #{@vectors_path}. " <>
+        "Run: git submodule update --init"
+    )
   end
 end
