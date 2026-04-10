@@ -16,12 +16,10 @@ defmodule FairPick.FrozenVectorsTest do
 
   @vectors_path Path.expand("../../../wallop/spec/vectors/fair-pick.json", __DIR__)
 
-  @vectors (
-    case File.read(@vectors_path) do
-      {:ok, json} -> Jason.decode!(json) |> Map.fetch!("vectors")
-      {:error, _} -> nil
-    end
-  )
+  @vectors (case File.read(@vectors_path) do
+              {:ok, json} -> Jason.decode!(json) |> Map.fetch!("vectors")
+              {:error, _} -> nil
+            end)
 
   if @vectors do
     for {vector, index} <- Enum.with_index(@vectors) do
